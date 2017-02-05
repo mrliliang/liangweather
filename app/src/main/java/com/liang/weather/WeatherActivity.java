@@ -1,13 +1,18 @@
 package com.liang.weather;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -17,6 +22,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.liang.weather.gson.Forecast;
 import com.liang.weather.gson.Weather;
+import com.liang.weather.service.AutoUpdateService;
 import com.liang.weather.util.HttpUtil;
 import com.liang.weather.util.Utility;
 
@@ -27,6 +33,12 @@ import okhttp3.Callback;
 import okhttp3.Response;
 
 public class WeatherActivity extends AppCompatActivity {
+
+    public DrawerLayout mDrawerLayout;
+
+    public Button mNavButton;
+
+    public SwipeRefreshLayout mSwipeRefreshLayout;
 
     private ScrollView weatherLayout;
 
@@ -63,6 +75,8 @@ public class WeatherActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_weather);
 
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mNavButton = (Button) findViewById(R.id.nav_button);
         bingPicImg = (ImageView) findViewById(R.id.bing_pic_img);
         weatherLayout = (ScrollView) findViewById(R.id.weather_layout);
         titleCity = (TextView) findViewById(R.id.title_city);
@@ -75,17 +89,29 @@ public class WeatherActivity extends AppCompatActivity {
         comfortText = (TextView) findViewById(R.id.comfort_text);
         carWashText = (TextView) findViewById(R.id.car_wash_text);
         sportText = (TextView) findViewById(R.id.sport_text);
+        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh);
+        mSwipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary);
+
+        mNavButton.setOnClickListener(v -> {
+            mDrawerLayout.openDrawer(GravityCompat.START);
+        });
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String weatherString = prefs.getString("weather", null);
+        final String weatherId;
         if (weatherString != null) {
             Weather weather = Utility.handleWeatherResponse(weatherString);
+            weatherId = weather.basic.weatherId;
             showWeatherInfo(weather);
         } else {
-            String weatherId = getIntent().getStringExtra("weather_id");
+            weatherId = getIntent().getStringExtra("weather_id");
             weatherLayout.setVisibility(View.INVISIBLE);
             requestWeather(weatherId);
         }
+
+        mSwipeRefreshLayout.setOnRefreshListener(() -> {
+            requestWeather(weatherId);
+        });
 
         String bingPic = prefs.getString("bing_pic", null);
         if (bingPic != null) {
@@ -104,6 +130,7 @@ public class WeatherActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     Toast.makeText(WeatherActivity.this, "获取天气信息失败", Toast.LENGTH_SHORT)
                             .show();
+                    mSwipeRefreshLayout.setRefreshing(false);
                 });
             }
 
@@ -122,6 +149,7 @@ public class WeatherActivity extends AppCompatActivity {
                         Toast.makeText(WeatherActivity.this, "获取天气信息失败", Toast.LENGTH_SHORT)
                                 .show();
                     }
+                    mSwipeRefreshLayout.setRefreshing(false);
                 });
             }
         });
@@ -165,6 +193,9 @@ public class WeatherActivity extends AppCompatActivity {
         carWashText.setText(carWash);
         sportText.setText(sport);
         weatherLayout.setVisibility(View.VISIBLE);
+
+        Intent intent = new Intent(this, AutoUpdateService.class);
+        startService(intent);
     }
 
     public void loadBingPic() {

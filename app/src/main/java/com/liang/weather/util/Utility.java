@@ -53,7 +53,6 @@ public class Utility {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            return true;
         }
         return false;
     }

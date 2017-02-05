@@ -14,6 +14,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.liang.weather.MainActivity;
 import com.liang.weather.R;
 import com.liang.weather.WeatherActivity;
 import com.liang.weather.db.City;
@@ -80,10 +81,17 @@ public class ChooseAreaFragment extends Fragment {
                 queryCounties();
             } else if (currentLevel == LEVEL_COUNTY) {
                 String weatheId = mCountyList.get(position).getWeatherId();
-                Intent intent = new Intent(getActivity(), WeatherActivity.class);
-                intent.putExtra("weather_id", weatheId);
-                startActivity(intent);
-                getActivity().finish();
+                if (getActivity() instanceof MainActivity) {
+                    Intent intent = new Intent(getActivity(), WeatherActivity.class);
+                    intent.putExtra("weather_id", weatheId);
+                    startActivity(intent);
+                    getActivity().finish();
+                } else if (getActivity() instanceof WeatherActivity) {
+                    WeatherActivity activity = (WeatherActivity) getActivity();
+                    activity.mDrawerLayout.closeDrawers();
+                    activity.mSwipeRefreshLayout.setRefreshing(true);
+                    activity.requestWeather(weatheId);
+                }
             }
         });
 
@@ -190,6 +198,11 @@ public class ChooseAreaFragment extends Fragment {
                         } else if ("county".equals(type)) {
                             queryCounties();
                         }
+                    });
+                } else {
+                    getActivity().runOnUiThread(() -> {
+                        closeProgressDialog();
+                        Toast.makeText(getContext(), "加载失败", Toast.LENGTH_SHORT).show();
                     });
                 }
             }
