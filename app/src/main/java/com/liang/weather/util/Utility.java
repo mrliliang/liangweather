@@ -2,9 +2,11 @@ package com.liang.weather.util;
 
 import android.text.TextUtils;
 
+import com.google.gson.Gson;
 import com.liang.weather.db.City;
 import com.liang.weather.db.County;
 import com.liang.weather.db.Province;
+import com.liang.weather.gson.Weather;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -74,6 +76,19 @@ public class Utility {
             }
         }
         return false;
+    }
+
+    public static Weather handleWeatherResponse(String response) {
+        try {
+            JSONObject jsonObject = new JSONObject(response);
+            JSONArray jsonArray = jsonObject.getJSONArray("HeWeather");
+            String weatherContent = jsonArray.getJSONObject(0).toString();
+            return new Gson().fromJson(weatherContent, Weather.class);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
 }

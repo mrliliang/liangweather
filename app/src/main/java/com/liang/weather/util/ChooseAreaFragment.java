@@ -1,6 +1,7 @@
 package com.liang.weather.util;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -14,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.liang.weather.R;
+import com.liang.weather.WeatherActivity;
 import com.liang.weather.db.City;
 import com.liang.weather.db.County;
 import com.liang.weather.db.Province;
@@ -76,6 +78,12 @@ public class ChooseAreaFragment extends Fragment {
             } else if (currentLevel == LEVEL_CITY) {
                 selectedCity = mCityList.get(position);
                 queryCounties();
+            } else if (currentLevel == LEVEL_COUNTY) {
+                String weatheId = mCountyList.get(position).getWeatherId();
+                Intent intent = new Intent(getActivity(), WeatherActivity.class);
+                intent.putExtra("weather_id", weatheId);
+                startActivity(intent);
+                getActivity().finish();
             }
         });
 
